@@ -4,7 +4,10 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, MessageCircle, Star, Lock } from "lucide-react";
 
+import Link from "next/link";
+
 interface PostCardProps {
+    id?: string;
     title: string;
     excerpt: string;
     author: string;
@@ -12,9 +15,10 @@ interface PostCardProps {
     comments: number;
     rating: number;
     isPremium?: boolean;
+    userId?: string;
 }
 
-export default function PostCard({ title, excerpt, author, likes, comments, rating, isPremium }: PostCardProps) {
+export default function PostCard({ id, title, excerpt, author, likes, comments, rating, isPremium, userId }: PostCardProps) {
     const [isExpanded, setIsExpanded] = useState(false);
 
     return (
@@ -27,8 +31,10 @@ export default function PostCard({ title, excerpt, author, likes, comments, rati
             <div className="p-6">
                 <div className="flex justify-between items-start mb-4">
                     <div>
-                        <h3 className="text-xl font-bold mb-1">{title}</h3>
-                        <p className="text-sm text-muted-foreground">by <span className="text-accent">{author}</span></p>
+                        <Link href={id ? `/post/${id}` : "#"} className="hover:underline">
+                            <h3 className="text-xl font-bold mb-1">{title}</h3>
+                        </Link>
+                        <p className="text-sm text-muted-foreground">by <Link href={userId ? `/profile/${userId}` : "#"} className="text-accent hover:underline">{author}</Link></p>
                     </div>
                     {isPremium && (
                         <div className="bg-accent/10 text-accent px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
@@ -38,10 +44,12 @@ export default function PostCard({ title, excerpt, author, likes, comments, rati
                     )}
                 </div>
 
-                <p className="text-muted-foreground mb-6 leading-relaxed">
-                    {excerpt}
-                    {!isExpanded && "..."}
-                </p>
+                <Link href={id ? `/post/${id}` : "#"}>
+                    <p className="text-muted-foreground mb-6 leading-relaxed hover:text-foreground transition-colors">
+                        {excerpt}
+                        ...
+                    </p>
+                </Link>
 
                 <div className="flex items-center gap-6 text-sm text-muted-foreground">
                     <button className="flex items-center gap-2 hover:text-red-500 transition-colors">

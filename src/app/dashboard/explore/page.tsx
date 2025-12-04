@@ -1,35 +1,25 @@
+import { db } from "@/db";
+import { posts, users } from "@/db/schema";
+import { desc, eq } from "drizzle-orm";
 import PostCard from "@/components/social/post-card";
+import { auth } from "@/auth";
 
-const posts = [
-    {
-        title: "The Art of Silence",
-        excerpt: "In the quiet moments between breaths, we find the truth that screams louder than any words ever could...",
-        author: "Elena V.",
-        likes: 1240,
-        comments: 85,
-        rating: 4.8,
-        isPremium: true,
-    },
-    {
-        title: "Neon Dreams",
-        excerpt: "The city lights blurred into a kaleidoscope of colors as the rain lashed against the windowpane...",
-        author: "CyberPunk99",
-        likes: 856,
-        comments: 42,
-        rating: 4.5,
-    },
-    {
-        title: "Ode to the Morning",
-        excerpt: "Golden rays pierce the veil of night, awakening the sleeping world with a gentle kiss...",
-        author: "PoetSoul",
-        likes: 2100,
-        comments: 156,
-        rating: 4.9,
-        isPremium: true,
-    },
-];
+export default async function ExplorePage() {
+    const session = await auth();
+    const allPosts = await db
+        .select({
+            id: posts.id,
+            title: posts.title,
+            excerpt: posts.excerpt,
+            isPremium: posts.isPremium,
+            userId: posts.userId,
+            authorName: users.name,
+            authorImage: users.image,
+        })
+        .from(posts)
+        .leftJoin(users, eq(posts.userId, users.id))
+        .orderBy(desc(posts.createdAt));
 
-export default function ExplorePage() {
     return (
         <div className="max-w-3xl mx-auto space-y-8 pb-20">
             <header className="mb-8">
@@ -38,9 +28,25 @@ export default function ExplorePage() {
             </header>
 
             <div className="space-y-6">
-                {posts.map((post, index) => (
-                    <PostCard key={index} {...post} />
-                ))}
+                {allPosts.length > 0 ? (
+                    allPosts.map((post) => (
+                        <PostCard
+                            key={post.id}
+                            title={post.title}
+                            excerpt={post.excerpt || ""}
+                            author={post.authorName || "Unknown"}
+                            likes={0}
+                            comments={0}
+                            rating={0}
+                            isPremium={post.isPremium || false}
+                            userId={post.userId}
+                        />
+                    ))
+                ) : (
+                    <div className="text-center py-12 text-muted-foreground bg-foreground/5 rounded-2xl">
+                        <p>No posts yet. Be the first to write something!</p>
+                    </div>
+                )}
             </div>
         </div>
     );

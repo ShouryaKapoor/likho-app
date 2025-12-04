@@ -17,6 +17,16 @@
   --color-accent: var(--accent);
 }
 
+/* Hide default cursor globally */
+body,
+a,
+button,
+input,
+textarea {
+  cursor: none;
+}
+
+
 /* Smooth scrolling for Lenis */
 html.lenis,
 html.lenis body {
@@ -49,17 +59,6 @@ h6 {
   font-weight: 800;
   /* Extra Bold */
   letter-spacing: -0.02em;
-}
-
-h1 {
-  font-size: 4rem;
-  line-height: 1.1;
-}
-
-@media (min-width: 768px) {
-  h1 {
-    font-size: 6rem;
-  }
 }
 
 /* 3D Utilities */

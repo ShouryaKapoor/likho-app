@@ -1,11 +1,13 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
+import NextImage from "next/image";
 import { useScroll, useTransform, motion, useSpring } from "framer-motion";
 import BookPage from "./book-page";
 import Lightbulb from "../intro/lightbulb";
 import Window from "../intro/window";
 import Clock from "../intro/clock";
+import deskBg from "@/assets/images/desk-background.png";
 
 // --- CONFIGURATION: EDIT THESE VALUES TO ALIGN THE BOOK ---
 const LAPTOP_CONFIG = {
@@ -146,10 +148,13 @@ export default function BookContainer({ cover, page1, page2, page3 }: BookContai
                         style={{ scale: isLit ? bgScale : 1, y: isLit ? bgY : 0, opacity: isLit ? bgOpacity : 1 }}
                         className="absolute inset-0 z-0 origin-center"
                     >
-                        <img
-                            src="/desk-bg.png"
+                        <NextImage
+                            src={deskBg}
                             alt="Creative Desk"
-                            className="w-full h-full object-cover"
+                            fill
+                            className="object-cover"
+                            priority
+                            placeholder="blur"
                         />
 
                         {/* --- DYNAMIC OVERLAYS --- */}

@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import Lightbulb from "./lightbulb";
+import FlashlightEffect from "@/components/ui/flashlight-effect";
 
 interface RoomProps {
     children: React.ReactNode; // The Book Cover (Hero)
@@ -39,12 +40,20 @@ export default function Room({ children, onEnter }: RoomProps) {
             <div className="sticky top-0 h-screen w-full overflow-hidden perspective-1000">
                 <Lightbulb onToggle={setIsLit} />
 
+                {/* Flashlight Effect when bulb is off */}
+                {!isLit && <FlashlightEffect />}
+
                 {/* Darkness Overlay */}
-                <motion.div
-                    animate={{ opacity: isLit ? 0 : 0.98 }}
-                    transition={{ duration: 1.5 }}
-                    className="absolute inset-0 bg-black z-40 pointer-events-none"
-                />
+                {/* Darkness Overlay - Only show when lit (fading out) or handle transition */}
+                {/* Since FlashlightEffect handles the darkness when !isLit, we only need this overlay to handle the transition to light */}
+                {isLit && (
+                    <motion.div
+                        initial={{ opacity: 1 }}
+                        animate={{ opacity: 0 }}
+                        transition={{ duration: 1.5 }}
+                        className="absolute inset-0 bg-black z-40 pointer-events-none"
+                    />
+                )}
 
                 {/* The Room Content */}
                 <motion.div
@@ -76,12 +85,19 @@ export default function Room({ children, onEnter }: RoomProps) {
 
                 {isLit && (
                     <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 1 }}
-                        className="absolute bottom-10 left-1/2 -translate-x-1/2 text-white/50 text-sm animate-bounce"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.5, duration: 0.8 }}
+                        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-[100] pointer-events-none"
                     >
-                        Scroll to explore
+                        <span className="text-white text-xs uppercase tracking-[0.2em] font-bold drop-shadow-md">Scroll to Enter</span>
+                        <div className="w-6 h-10 border-2 border-white rounded-full flex justify-center p-1 shadow-lg bg-black/20 backdrop-blur-sm">
+                            <motion.div
+                                animate={{ y: [0, 12, 0] }}
+                                transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                                className="w-1 h-2 bg-white rounded-full shadow-[0_0_10px_rgba(255,255,255,0.8)]"
+                            />
+                        </div>
                     </motion.div>
                 )}
             </div>

@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import SmoothScroll from "@/components/smooth-scroll";
 import Cursor from "@/components/ui/cursor";
+import { AuthProvider } from "@/components/auth/auth-context";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,18 +20,29 @@ export const metadata: Metadata = {
   description: "A crazy interactive platform for writers.",
 };
 
-export default function RootLayout({
+import Providers from "@/components/auth/session-provider";
+import { auth } from "@/auth";
+
+// ... imports
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await auth();
+
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground cursor-none`}
       >
         <Cursor />
-        <SmoothScroll>{children}</SmoothScroll>
+        <Providers session={session}>
+          <AuthProvider>
+            <SmoothScroll>{children}</SmoothScroll>
+          </AuthProvider>
+        </Providers>
       </body>
     </html>
   );

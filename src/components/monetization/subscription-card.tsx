@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 
@@ -11,6 +12,10 @@ interface SubscriptionCardProps {
 }
 
 export default function SubscriptionCard({ title, price, features, isPopular }: SubscriptionCardProps) {
+    const handleSubscribe = () => {
+        alert("Online payments are currently disabled. Please contact support to upgrade.");
+    };
+
     return (
         <motion.div
             whileHover={{ y: -10 }}
@@ -33,7 +38,10 @@ export default function SubscriptionCard({ title, price, features, isPopular }: 
                     </li>
                 ))}
             </ul>
-            <button className={`w-full py-3 rounded-xl font-bold transition-colors ${isPopular ? "bg-accent text-white hover:bg-accent/90" : "bg-foreground text-background hover:bg-foreground/90"}`}>
+            <button
+                onClick={handleSubscribe}
+                className={`w-full py-3 rounded-xl font-bold transition-colors ${isPopular ? "bg-accent text-white hover:bg-accent/90" : "bg-foreground text-background hover:bg-foreground/90"}`}
+            >
                 Choose Plan
             </button>
         </motion.div>
