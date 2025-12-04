@@ -1,4 +1,4 @@
-# Writers App
+# Likho(लिखो) App
 
 A comprehensive platform for writers to share their creativity with the world. Whether you are writing a book, a blog post, a song, or a poem, Writers App provides the tools you need to publish and manage your work.
 
