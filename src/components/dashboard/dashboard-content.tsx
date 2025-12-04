@@ -138,8 +138,8 @@ export default function DashboardContent({ user, recentWorks, stats }: Dashboard
                                 whileHover={{ scale: 1.02 }}
                                 className="p-6 rounded-2xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 border border-purple-500/20 cursor-pointer mb-4"
                             >
-                                <h3 className="font-bold text-lg mb-2">Start a New Book</h3>
-                                <p className="text-sm text-muted-foreground mb-4">Ready to write your next bestseller?</p>
+                                <h3 className="font-bold text-lg mb-2">Publish a new post</h3>
+                                <p className="text-sm text-muted-foreground mb-4">Share your thoughts with the world.</p>
                                 <span className="text-sm font-bold text-purple-400 flex items-center gap-2">
                                     Create Now <ArrowRight className="w-4 h-4" />
                                 </span>

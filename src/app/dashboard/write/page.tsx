@@ -7,7 +7,7 @@ import Editor from "@/components/editor/editor";
 import BookEditor from "@/components/editor/book-editor";
 
 const categories = [
-    { id: "book", label: "Book", icon: Book, description: "Write a novel with chapters" },
+    // { id: "book", label: "Book", icon: Book, description: "Write a novel with chapters" },
     { id: "blog", label: "Blog", icon: Layout, description: "Create a blog post" },
     { id: "poem", label: "Poem", icon: Feather, description: "Compose poetry" },
     { id: "song", label: "Song", icon: Music, description: "Write lyrics" },
@@ -15,7 +15,7 @@ const categories = [
 ];
 
 export default function WritePage() {
-    const [selectedCategory, setSelectedCategory] = useState("book");
+    const [selectedCategory, setSelectedCategory] = useState("blog");
 
     return (
         <div className="h-full flex flex-col">
@@ -32,8 +32,8 @@ export default function WritePage() {
                                 key={category.id}
                                 onClick={() => setSelectedCategory(category.id)}
                                 className={`flex items-center gap-3 px-5 py-3 rounded-xl border transition-all whitespace-nowrap ${isSelected
-                                        ? "bg-foreground text-background border-foreground shadow-lg scale-105"
-                                        : "bg-foreground/5 border-foreground/10 text-muted-foreground hover:bg-foreground/10 hover:text-foreground"
+                                    ? "bg-foreground text-background border-foreground shadow-lg scale-105"
+                                    : "bg-foreground/5 border-foreground/10 text-muted-foreground hover:bg-foreground/10 hover:text-foreground"
                                     }`}
                             >
                                 <Icon className="w-4 h-4" />

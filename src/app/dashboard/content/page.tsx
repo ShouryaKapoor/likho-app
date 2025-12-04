@@ -1,14 +1,21 @@
-"use client";
-
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { auth } from "@/auth";
+import { db } from "@/db";
+import { posts } from "@/db/schema";
+import { eq, desc } from "drizzle-orm";
 import { FileText, Plus, Search } from "lucide-react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import UserPostList from "@/components/dashboard/user-post-list";
 
-export default function ContentPage() {
-    // Mock content state - initially empty to show the empty state as requested
-    // In a real app, this would fetch from an API or local storage
-    const [content, setContent] = useState<any[]>([]);
+export default async function ContentPage() {
+    const session = await auth();
+    if (!session?.user?.id) return redirect("/login");
+
+    const userPosts = await db
+        .select()
+        .from(posts)
+        .where(eq(posts.userId, session.user.id))
+        .orderBy(desc(posts.createdAt));
 
     return (
         <div className="h-full flex flex-col">
@@ -36,12 +43,8 @@ export default function ContentPage() {
                 </div>
             </header>
 
-            {content.length === 0 ? (
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex-1 flex flex-col items-center justify-center text-center p-12 border-2 border-dashed border-foreground/10 rounded-3xl bg-foreground/5"
-                >
+            {userPosts.length === 0 ? (
+                <div className="flex-1 flex flex-col items-center justify-center text-center p-12 border-2 border-dashed border-foreground/10 rounded-3xl bg-foreground/5">
                     <div className="w-20 h-20 rounded-full bg-foreground/10 flex items-center justify-center mb-6">
                         <FileText className="w-10 h-10 text-muted-foreground" />
                     </div>
@@ -56,11 +59,9 @@ export default function ContentPage() {
                         <Plus className="w-5 h-5" />
                         Start Writing
                     </Link>
-                </motion.div>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {/* Content list would go here */}
                 </div>
+            ) : (
+                <UserPostList posts={userPosts} />
             )}
         </div>
     );
