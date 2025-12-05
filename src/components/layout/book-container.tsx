@@ -2,12 +2,14 @@
 
 import { useRef, useState, useEffect } from "react";
 import NextImage from "next/image";
-import { useScroll, useTransform, motion, useSpring } from "framer-motion";
+import { useScroll, useTransform, motion, useSpring, useMotionValue, animate } from "framer-motion";
 import BookPage from "./book-page";
 import Lightbulb from "../intro/lightbulb";
 import Window from "../intro/window";
 import Clock from "../intro/clock";
+import SwipePrompt from "./swipe-prompt";
 import deskBg from "@/assets/images/desk-background.png";
+import mobileBg from "@/assets/images/mobile-background.jpg";
 
 // --- CONFIGURATION: EDIT THESE VALUES TO ALIGN THE BOOK ---
 const LAPTOP_CONFIG = {
@@ -15,6 +17,14 @@ const LAPTOP_CONFIG = {
     rotateX: 0,     // Tilt angle in degrees (match the laptop screen tilt)
     y: -70,         // Vertical position (Positive = Down, Negative = Up)
     x: 4.0          // Horizontal position (Positive = Right, Negative = Left)
+};
+
+// --- MOBILE CONFIGURATION: ALIGN CONTENT ON PHONE SCREEN ---
+const MOBILE_CONFIG = {
+    scale: 0.2,    // Smaller scale for phone screen
+    rotateX: 0,
+    y: 90,          // Lower down to match phone position in hand
+    x: 29            // Centered
 };
 
 // --- CONFIGURATION: EDIT THESE VALUES TO ALIGN THE CLOCK ---
@@ -53,16 +63,67 @@ export default function BookContainer({ cover, page1, page2, page3 }: BookContai
     const [isLit, setIsLit] = useState(false);
     const [isReady, setIsReady] = useState(false); // New state to delay animation start
     const containerRef = useRef<HTMLDivElement>(null);
+    const [isMobile, setIsMobile] = useState(false);
+
+    // Mobile Navigation State
+    const [mobileStep, setMobileStep] = useState(0); // 0: Laptop, 1: Reading (Cover), 2: Page 1, 3: Page 2
+    const mobileProgress = useMotionValue(0);
+
+    // Detect Mobile
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+        checkMobile();
+        window.addEventListener("resize", checkMobile);
+        return () => window.removeEventListener("resize", checkMobile);
+    }, []);
 
     // Use global page scroll instead of element target to avoid layout shift calculation errors
     const { scrollYProgress: rawScrollYProgress } = useScroll();
 
     // Smooth out the scroll progress to prevent jumpiness and initial glitches
-    const scrollYProgress = useSpring(rawScrollYProgress, {
+    const smoothScrollYProgress = useSpring(rawScrollYProgress, {
         stiffness: 100,
         damping: 30,
         restDelta: 0.001
     });
+
+    // Unified Progress Value (Switches between Scroll and Manual Mobile State)
+    const progress = isMobile ? mobileProgress : smoothScrollYProgress;
+
+    // Mobile Step Logic
+    useEffect(() => {
+        if (isMobile) {
+            // Map steps to progress values
+            // 0: Laptop -> 0
+            // 1: Reading -> 0.4 (Start of reading phase)
+            // 2: Page 1 -> 0.7 (Mid reading)
+            // 3: Page 2 -> 1.0 (End)
+            const target = mobileStep === 0 ? 0 :
+                mobileStep === 1 ? 0.4 :
+                    mobileStep === 2 ? 0.7 : 1.0;
+
+            animate(mobileProgress, target, {
+                duration: 0.8,
+                ease: "easeInOut"
+            });
+        }
+    }, [mobileStep, isMobile, mobileProgress]);
+
+    // Handle Swipe
+    const handleSwipe = (event: any, info: any) => {
+        if (!isMobile || !isLit) return;
+
+        const swipeThreshold = 50;
+        if (info.offset.y < -swipeThreshold) {
+            // Swipe Up (Next)
+            if (mobileStep < 3) setMobileStep(prev => prev + 1);
+        } else if (info.offset.y > swipeThreshold) {
+            // Swipe Down (Prev)
+            if (mobileStep > 0) setMobileStep(prev => prev - 1);
+        }
+    };
 
     // --- SCROLL MAPPING ---
     // 0.0 -> 0.2: ZOOM PHASE (Laptop -> Full Screen)
@@ -70,32 +131,32 @@ export default function BookContainer({ cover, page1, page2, page3 }: BookContai
     // 0.4 -> 1.0: READING PHASE (Page Flips)
 
     // Background Zoom (Simulate camera moving in)
-    const bgScale = useTransform(scrollYProgress, [0, 0.2], [1, 2.5]); // Deep zoom into laptop
-    const bgOpacity = useTransform(scrollYProgress, [0.15, 0.2], [1, 0]); // Fade out bg as we get close
+    const bgScale = useTransform(progress, [0, 0.2], [1, 2.5]); // Deep zoom into laptop
+    const bgOpacity = useTransform(progress, [0.15, 0.2], [1, 0]); // Fade out bg as we get close
 
     // Background Position (Center on Laptop)
     // We need to shift the background so the laptop stays central as we zoom
-    const bgY = useTransform(scrollYProgress, [0, 0.2], ["0%", "10%"]);
+    const bgY = useTransform(progress, [0, 0.2], ["0%", "10%"]);
 
     // Book Zoom (From Laptop Screen to Full Screen)
     // Uses the LAPTOP_CONFIG values for the initial state
-    const scale = useTransform(scrollYProgress, [0, 0.2], [LAPTOP_CONFIG.scale, 1]);
-    const rotateX = useTransform(scrollYProgress, [0, 0.2], [LAPTOP_CONFIG.rotateX, 0]);
-    const y = useTransform(scrollYProgress, [0, 0.2], [LAPTOP_CONFIG.y, 0]);
-    const x = useTransform(scrollYProgress, [0, 0.2], [LAPTOP_CONFIG.x, 0]);
+    const scale = useTransform(progress, [0, 0.2], [isMobile ? MOBILE_CONFIG.scale : LAPTOP_CONFIG.scale, 1]);
+    const rotateX = useTransform(progress, [0, 0.2], [isMobile ? MOBILE_CONFIG.rotateX : LAPTOP_CONFIG.rotateX, 0]);
+    const y = useTransform(progress, [0, 0.2], [isMobile ? MOBILE_CONFIG.y : LAPTOP_CONFIG.y, 0]);
+    const x = useTransform(progress, [0, 0.2], [isMobile ? MOBILE_CONFIG.x : LAPTOP_CONFIG.x, 0]);
 
     // Room Opacity (Fade out room as we zoom in)
-    const roomOpacity = useTransform(scrollYProgress, [0.15, 0.2], [1, 0]);
+    const roomOpacity = useTransform(progress, [0.15, 0.2], [1, 0]);
 
     // Page Flip Transforms (Start after HOLD phase at 0.4)
-    const coverRotateY = useTransform(scrollYProgress, [0.4, 0.6], [0, -180]);
-    const page1RotateY = useTransform(scrollYProgress, [0.6, 0.8], [0, -180]);
-    const page2RotateY = useTransform(scrollYProgress, [0.8, 1.0], [0, -180]);
+    const coverRotateY = useTransform(progress, [0.4, 0.6], [0, -180]);
+    const page1RotateY = useTransform(progress, [0.6, 0.8], [0, -180]);
+    const page2RotateY = useTransform(progress, [0.8, 1.0], [0, -180]);
 
     // Z-Index Management (Switch at 90deg to avoid clipping)
-    const coverZ = useTransform(scrollYProgress, [0.4, 0.5, 0.501, 0.6], [40, 40, 0, 0]);
-    const page1Z = useTransform(scrollYProgress, [0.6, 0.7, 0.701, 0.8], [30, 30, 10, 10]);
-    const page2Z = useTransform(scrollYProgress, [0.8, 0.9, 0.901, 1.0], [20, 20, 10, 10]);
+    const coverZ = useTransform(progress, [0.4, 0.5, 0.501, 0.6], [40, 40, 0, 0]);
+    const page1Z = useTransform(progress, [0.6, 0.7, 0.701, 0.8], [30, 30, 10, 10]);
+    const page2Z = useTransform(progress, [0.8, 0.9, 0.901, 1.0], [20, 20, 10, 10]);
 
     // Force scroll to top on mount to ensure sequence starts correctly
     useEffect(() => {
@@ -105,15 +166,15 @@ export default function BookContainer({ cover, page1, page2, page3 }: BookContai
         window.scrollTo(0, 0);
     }, []);
 
-    // Lock body scroll when not lit
+    // Lock body scroll when not lit OR when on mobile (to prevent native scroll)
     useEffect(() => {
-        if (!isLit) {
+        if (!isLit || isMobile) {
             document.body.style.overflow = "hidden";
-            window.scrollTo(0, 0);
+            if (!isMobile) window.scrollTo(0, 0);
         } else {
             document.body.style.overflow = "auto";
         }
-    }, [isLit]);
+    }, [isLit, isMobile]);
 
     const handleToggle = (val: boolean) => {
         if (val) {
@@ -125,6 +186,7 @@ export default function BookContainer({ cover, page1, page2, page3 }: BookContai
         } else {
             setIsLit(false);
             setIsReady(false);
+            setMobileStep(0); // Reset mobile step
         }
     };
 
@@ -134,9 +196,14 @@ export default function BookContainer({ cover, page1, page2, page3 }: BookContai
     return (
         <div
             ref={containerRef}
-            className="relative bg-neutral-900 transition-all duration-1000 h-[500vh]"
+            className={`relative bg-neutral-900 transition-all duration-1000 ${isMobile ? "h-screen overflow-hidden" : "h-[500vh]"}`}
         >
-            <div className="sticky top-0 h-screen w-full flex items-center justify-center perspective-2000 overflow-hidden">
+            {isMobile && isLit && <SwipePrompt />}
+
+            <motion.div
+                className="sticky top-0 h-screen w-full flex items-center justify-center perspective-2000 overflow-hidden"
+                onPanEnd={handleSwipe}
+            >
 
                 {/* --- SCENE 1: THE ROOM (Background) --- */}
                 <motion.div
@@ -149,7 +216,7 @@ export default function BookContainer({ cover, page1, page2, page3 }: BookContai
                         className="absolute inset-0 z-0 origin-center"
                     >
                         <NextImage
-                            src={deskBg}
+                            src={isMobile ? mobileBg : deskBg}
                             alt="Creative Desk"
                             fill
                             className="object-cover"
@@ -159,9 +226,9 @@ export default function BookContainer({ cover, page1, page2, page3 }: BookContai
 
                         {/* --- DYNAMIC OVERLAYS --- */}
 
-                        {/* Window Overlay (Right Side) */}
+                        {/* Window Overlay (Right Side) - HIDDEN ON MOBILE */}
                         <div
-                            className="absolute overflow-hidden rounded-lg z-10"
+                            className="hidden md:block absolute overflow-hidden rounded-lg z-10"
                             style={{
                                 top: WINDOW_CONFIG.top,
                                 right: WINDOW_CONFIG.right,
@@ -174,9 +241,9 @@ export default function BookContainer({ cover, page1, page2, page3 }: BookContai
                             <Window />
                         </div>
 
-                        {/* Clock Overlay (Right Desk) */}
+                        {/* Clock Overlay (Right Desk) - HIDDEN ON MOBILE */}
                         <div
-                            className="absolute flex items-center justify-center z-10"
+                            className="hidden md:flex absolute items-center justify-center z-10"
                             style={{
                                 bottom: CLOCK_CONFIG.bottom,
                                 right: CLOCK_CONFIG.right,
@@ -261,7 +328,7 @@ export default function BookContainer({ cover, page1, page2, page3 }: BookContai
                         Click the lightbulb to begin
                     </div>
                 )}
-            </div>
+            </motion.div>
         </div>
     );
 }
